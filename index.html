@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>The Last War 數據統計</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-2 sm:p-5">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold text-center mb-6 text-blue-700">LastWar 數據統計</h1>
+        
+        <div class="flex mb-4">
+            <button onclick="showTab('form')" class="flex-1 py-2 bg-blue-500 text-white rounded-l-lg">填寫資料</button>
+            <button onclick="showTab('admin'); loadData();" class="flex-1 py-2 bg-gray-500 text-white rounded-r-lg">幹部查詢</button>
+        </div>
+
+        <div id="formSection" class="bg-white p-4 rounded-lg shadow">
+            <form id="dataForm" class="space-y-3">
+                <input type="text" id="gameId" placeholder="遊戲 ID" class="w-full border p-2 rounded" required>
+                <select id="job" class="w-full border p-2 rounded">
+                    <option>指揮官</option><option>戰術家</option>
+                </select>
+                <select id="squadType" class="w-full border p-2 rounded">
+                    <option>坦克</option><option>飛機</option><option>導彈</option>
+                </select>
+                <input type="number" id="squadCP" placeholder="第一小隊戰力" class="w-full border p-2 rounded" required>
+                <input type="text" id="topHero" placeholder="最強英雄" class="w-full border p-2 rounded">
+                <input type="number" id="topHeroCP" placeholder="最強英雄戰力" class="w-full border p-2 rounded">
+                <input type="text" id="nationality" placeholder="國家" class="w-full border p-2 rounded">
+                <div class="flex gap-2">
+                    <select id="dsGroup" class="flex-1 border p-2 rounded"><option value="A">DS-A組</option><option value="B">DS-B組</option></select>
+                    <select id="csGroup" class="flex-1 border p-2 rounded"><option value="A">CS-A組</option><option value="B">CS-B組</option></select>
+                </div>
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white p-3 rounded font-bold">提交 (ID重複會自動覆蓋)</button>
+            </form>
+        </div>
+
+        <div id="adminSection" class="hidden space-y-4">
+            <div class="flex gap-2">
+                <button onclick="renderTable('DS')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">DS A/B 排序</button>
+                <button onclick="renderTable('CS')" class="bg-orange-600 text-white px-3 py-1 rounded text-sm">CS A/B 排序</button>
+            </div>
+            <div class="bg-white rounded shadow overflow-x-auto text-xs">
+                <table class="w-full border-collapse">
+                    <thead><tr class="bg-gray-200">
+                        <th class="border p-1">ID</th><th class="border p-1">一隊戰力</th><th class="border p-1">狀態</th>
+                    </tr></thead>
+                    <tbody id="dataTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxeIwAzedTJs8Pxkg4CkM0Bf8fehXQsOLNswy3umbOnArbT8M7_MPtXJ8wbK7HECUo7YA/exec'; 
+
+        function showTab(type) {
+            document.getElementById('formSection').classList.toggle('hidden', type !== 'form');
+            document.getElementById('adminSection').classList.toggle('hidden', type !== 'admin');
+        }
+
+        document.getElementById('dataForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = '處理中...';
+            btn.disabled = true;
+
+            const data = {
+                gameId: document.getElementById('gameId').value,
+                job: document.getElementById('job').value,
+                squadType: document.getElementById('squadType').value,
+                squadCP: parseInt(document.getElementById('squadCP').value),
+                topHero: document.getElementById('topHero').value,
+                topHeroCP: parseInt(document.getElementById('topHeroCP').value),
+                nationality: document.getElementById('nationality').value,
+                dsGroup: document.getElementById('dsGroup').value,
+                csGroup: document.getElementById('csGroup').value
+            };
+
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) });
+            alert('提交完成！數據已更新。');
+            btn.innerText = '提交 (ID重複會自動覆蓋)';
+            btn.disabled = false;
+        };
+
+        let rawData = [];
+        async function loadData() {
+            const res = await fetch(SCRIPT_URL);
+            const json = await res.json();
+            rawData = json.slice(1);
+            renderTable('DS');
+        }
+
+        function renderTable(type) {
+            const groupIdx = (type === 'DS' ? 7 : 8);
+            const sorted = [...rawData].sort((a, b) => b[3] - a[3]);
+            
+            const tbody = document.getElementById('dataTable');
+            tbody.innerHTML = sorted.map((row, idx) => {
+                let status = '候補';
+                if (idx < 20) status = '正取';
+                else if (idx < 30) status = '備取';
+                return `<tr class="${idx < 20 ? 'bg-blue-50' : ''}">
+                    <td class="border p-2">${row[0]}</td>
+                    <td class="border p-2">${row[3]}</td>
+                    <td class="border p-2 font-bold">${status} (${row[groupIdx]})</td>
+                </tr>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
