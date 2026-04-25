@@ -2,101 +2,98 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>The Last War 數據統計系統 (Supabase版)</title>
+    <title>The Last War 數據統計系統 v2.2</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .sort-icon::after { content: ' ↕'; font-size: 0.8em; opacity: 0.5; }
+    </style>
 </head>
 <body class="bg-slate-50 p-2 sm:p-5 text-gray-800">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-2xl font-bold text-center mb-6 text-indigo-700">The Last War 聯盟數據庫</h1>
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-3xl font-black text-center mb-6 text-indigo-800 tracking-tight">LAST WAR 聯盟戰力管理</h1>
         
-        <div class="flex mb-5 bg-white rounded-lg shadow p-1">
-            <button onclick="showTab('form')" id="btn-form" class="flex-1 py-2 rounded-md font-bold transition bg-indigo-600 text-white">玩家填寫</button>
-            <button onclick="showTab('admin'); loadData();" id="btn-admin" class="flex-1 py-2 rounded-md font-bold transition text-gray-600">幹部後台</button>
+        <div class="flex mb-6 bg-white rounded-xl shadow-sm p-1.5 border border-slate-200">
+            <button onclick="showTab('form')" id="btn-form" class="flex-1 py-3 rounded-lg font-bold transition bg-indigo-600 text-white shadow-md">玩家填寫</button>
+            <button onclick="checkAdminPassword()" id="btn-admin" class="flex-1 py-3 rounded-lg font-bold transition text-slate-500">幹部後台</button>
         </div>
 
-        <div id="formSection" class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+        <div id="formSection" class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100">
             <form id="playerForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-gray-600"> 玩家名稱 (必填，相同 玩家名稱 會自動覆蓋舊資料)</label>
-                    <input type="text" id="game_id" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none" placeholder="例: Luo4698" required>
+                <div class="p-5 bg-indigo-50 rounded-xl border border-indigo-100 mb-6">
+                    <label class="block text-sm font-black mb-2 text-indigo-700">玩家名稱 (唯一識別欄位，重複將覆蓋資料)</label>
+                    <input type="text" id="player_name" class="w-full border border-indigo-300 p-4 rounded-xl focus:ring-4 focus:ring-indigo-200 outline-none font-bold text-lg" placeholder="請輸入遊戲內精確暱稱" required>
                 </div>
-                
-                <div class="grid grid-cols-2 gap-4">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-semibold mb-1 text-gray-600">遊戲職業</label>
-                        <select id="job" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50">
-                            <option>戰爭領袖</option>
-                            <option>工程師</option>
+                        <label class="block text-sm font-bold mb-1 text-slate-600">伺服器編號 #</label>
+                        <input type="text" id="server_id" class="w-full border border-slate-300 p-3 rounded-xl outline-none" placeholder="例: 1024" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1 text-slate-600">聯盟代號</label>
+                        <input type="text" id="alliance_tag" class="w-full border border-slate-300 p-3 rounded-xl outline-none" placeholder="Oops / Bliz" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold mb-1 text-slate-600">遊戲職業</label>
+                        <select id="job" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50">
+                            <option>戰爭領袖</option><option>工程師</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1 text-gray-600">第一小隊軍種</label>
-                        <select id="squad_type" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50">
+                        <label class="block text-sm font-bold mb-1 text-slate-600">第一小隊軍種</label>
+                        <select id="squad_type" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50">
                             <option>坦克</option><option>飛機</option><option>導彈</option>
                         </select>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-gray-600">第一小隊戰力 (支援數字與小數點)</label>
-                    <input type="text" id="squad_cp" class="w-full border border-gray-300 p-3 rounded-lg" placeholder="例: 55.42" required>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-6">
                     <div>
-                        <label class="block text-sm font-semibold mb-1 text-gray-600">最高戰力英雄</label>
-                        <input type="text" id="top_hero" class="w-full border border-gray-300 p-3 rounded-lg" placeholder="例: 金恩">
+                        <label class="block text-sm font-bold mb-1 text-slate-600">第一小隊戰力 (CP)</label>
+                        <input type="text" id="squad_cp" class="w-full border border-slate-300 p-3 rounded-xl font-mono text-indigo-700 font-bold text-lg" placeholder="例: 55.42" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1 text-gray-600">該英雄戰力值</label>
-                        <input type="number" step="0.01" id="top_hero_cp" class="w-full border border-gray-300 p-3 rounded-lg" placeholder="數值">
+                        <label class="block text-sm font-bold mb-1 text-slate-600">英雄總戰力</label>
+                        <input type="text" id="total_hero_cp" class="w-full border border-slate-300 p-3 rounded-xl font-mono" placeholder="例: 350.2" required>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold mb-1 text-gray-600">玩家所屬國家</label>
-                    <input type="text" id="nationality" class="w-full border border-gray-300 p-3 rounded-lg" placeholder="例: Taiwan">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                     <div>
-                        <label class="block text-sm font-semibold mb-1 text-gray-600">DS 出戰分組</label>
-                        <select id="ds_group" class="w-full border border-gray-300 p-3 rounded-lg"><option>A</option><option>B</option></select>
+                        <label class="block text-xs font-black uppercase text-slate-400 mb-1">DS 分組意願</label>
+                        <select id="ds_group" class="w-full border border-slate-300 p-2 rounded-lg font-bold"><option>A</option><option>B</option></select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-1 text-gray-600">CS 出戰分組</label>
-                        <select id="cs_group" class="w-full border border-gray-300 p-3 rounded-lg"><option>A</option><option>B</option></select>
+                        <label class="block text-xs font-black uppercase text-slate-400 mb-1">CS 分組意願</label>
+                        <select id="cs_group" class="w-full border border-slate-300 p-2 rounded-lg font-bold"><option>A</option><option>B</option></select>
                     </div>
                 </div>
 
-                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white p-4 rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-lg transition duration-200">提交資料</button>
+                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white p-5 rounded-xl font-black text-xl hover:bg-indigo-700 shadow-xl transform active:scale-95 transition duration-200">確認提交 / 更新資料</button>
             </form>
         </div>
 
-        <div id="adminSection" class="hidden space-y-4">
-            <div class="flex flex-wrap gap-2">
-                <button onclick="renderTable('DS')" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow text-sm font-medium">DS 戰力排序</button>
-                <button onclick="renderTable('CS')" class="bg-orange-600 text-white px-4 py-2 rounded-lg shadow text-sm font-medium">CS 戰力排序</button>
-                <button onclick="renderTable('JOB')" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow text-sm font-medium">按職業排序</button>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+        <div id="adminSection" class="hidden">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-100 text-gray-600">
+                        <thead class="bg-slate-800 text-white">
                             <tr>
-                                <th class="p-4 font-bold">Game ID</th>
-                                <th class="p-4 font-bold">職業 / 軍種</th>
-                                <th class="p-4 font-bold text-right">一隊戰力</th>
-                                <th class="p-4 font-bold text-center">DS/CS組</th>
-                                <th class="p-4 font-bold">狀態</th>
+                                <th class="p-4 cursor-pointer hover:bg-slate-700 sort-icon text-xs" onclick="sortData('server_id')">S#</th>
+                                <th class="p-4 cursor-pointer hover:bg-slate-700 sort-icon text-xs" onclick="sortData('alliance_tag')">聯盟</th>
+                                <th class="p-4 font-bold">玩家名稱</th>
+                                <th class="p-4 cursor-pointer hover:bg-slate-700 sort-icon text-right" onclick="sortData('squad_cp')">一隊 CP</th>
+                                <th class="p-4 text-center text-xs">分組</th>
+                                <th class="p-4">錄取狀態</th>
                             </tr>
                         </thead>
-                        <tbody id="dataTable" class="divide-y divide-gray-100">
-                            <tr><td colspan="5" class="p-10 text-center text-gray-400">正在連線至 Supabase 資料庫...</td></tr>
-                        </tbody>
+                        <tbody id="dataTable" class="divide-y divide-slate-100 font-medium text-slate-700">
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -104,104 +101,107 @@
     </div>
 
     <script>
-        // --- 初始化 Supabase ---
         const SUPABASE_URL = 'https://vziifqutkjmxrrasvrvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6aWlmcXV0a2pteHJyYXN2cnZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwOTc2MTksImV4cCI6MjA5MjY3MzYxOX0.ZWfueg3GxwK1xLFR4METoTIOzknQTAxh_dkqAkhpJ0c'; 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const ADMIN_PWD = "oops336";
 
-        // 頁籤切換邏輯
+        let allPlayers = [];
+        let currentSort = { key: 'squad_cp', asc: false };
+
+        function checkAdminPassword() {
+            const pass = prompt("請輸入幹部管理密碼：");
+            if (pass === ADMIN_PWD) {
+                showTab('admin');
+                loadData();
+            } else if (pass !== null) {
+                alert("密碼錯誤。");
+            }
+        }
+
         function showTab(type) {
             const isForm = type === 'form';
             document.getElementById('formSection').classList.toggle('hidden', !isForm);
             document.getElementById('adminSection').classList.toggle('hidden', isForm);
-            
-            document.getElementById('btn-form').className = isForm ? 'flex-1 py-2 rounded-md font-bold bg-indigo-600 text-white' : 'flex-1 py-2 rounded-md font-bold text-gray-600';
-            document.getElementById('btn-admin').className = !isForm ? 'flex-1 py-2 rounded-md font-bold bg-indigo-600 text-white' : 'flex-1 py-2 rounded-md font-bold text-gray-600';
+            document.getElementById('btn-form').className = isForm ? "flex-1 py-3 rounded-lg font-bold transition bg-indigo-600 text-white shadow-md" : "flex-1 py-3 rounded-lg font-bold transition text-slate-500";
+            document.getElementById('btn-admin').className = !isForm ? "flex-1 py-3 rounded-lg font-bold transition bg-indigo-600 text-white shadow-md" : "flex-1 py-3 rounded-lg font-bold transition text-slate-500";
         }
 
-        // --- 提交數據 ---
         document.getElementById('playerForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             btn.innerText = '處理中...';
             btn.disabled = true;
 
-            const formData = {
-                game_id: document.getElementById('game_id').value,
+            const payload = {
+                player_name: document.getElementById('player_name').value.trim(),
+                server_id: document.getElementById('server_id').value,
+                alliance_tag: document.getElementById('alliance_tag').value,
                 job: document.getElementById('job').value,
                 squad_type: document.getElementById('squad_type').value,
                 squad_cp: document.getElementById('squad_cp').value,
-                top_hero: document.getElementById('top_hero').value,
-                top_hero_cp: parseFloat(document.getElementById('top_hero_cp').value) || 0,
-                nationality: document.getElementById('nationality').value,
+                total_hero_cp: document.getElementById('total_hero_cp').value,
                 ds_group: document.getElementById('ds_group').value,
                 cs_group: document.getElementById('cs_group').value
             };
 
-            // 使用 upsert，當 game_id 衝突時自動更新
-            const { error } = await _supabase
-                .from('players')
-                .upsert(formData, { onConflict: 'game_id' });
+            const { error } = await _supabase.from('players').upsert(payload, { onConflict: 'player_name' });
 
             if (error) {
-                console.error(error);
                 alert('提交失敗：' + error.message);
             } else {
-                alert('數據已成功傳送並更新！');
+                alert('【' + payload.player_name + '】數據已更新成功！');
                 document.getElementById('playerForm').reset();
             }
-            btn.innerText = '提交資料';
+            btn.innerText = '確認提交 / 更新資料';
             btn.disabled = false;
         };
 
-        // --- 讀取與顯示數據 ---
-        let allPlayers = [];
         async function loadData() {
-            const { data, error } = await _supabase
-                .from('players')
-                .select('*');
-
-            if (error) {
-                alert('讀取資料失敗');
-                return;
+            const tbody = document.getElementById('dataTable');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-slate-400">正在讀取雲端數據...</td></tr>';
+            const { data, error } = await _supabase.from('players').select('*');
+            if (!error) {
+                allPlayers = data;
+                renderTable();
             }
-            allPlayers = data;
-            renderTable('DS'); // 預設依戰力排序
         }
 
-        function renderTable(sortMode) {
-            let displayData = [...allPlayers];
-
-            if (sortMode === 'JOB') {
-                displayData.sort((a, b) => a.job.localeCompare(b.job));
+        function sortData(key) {
+            if (currentSort.key === key) {
+                currentSort.asc = !currentSort.asc;
             } else {
-                // 依據一隊戰力排序 (嘗試轉數字排序)
-                displayData.sort((a, b) => {
-                    const cpA = parseFloat(a.squad_cp) || 0;
-                    const cpB = parseFloat(b.squad_cp) || 0;
-                    return cpB - cpA;
-                });
+                currentSort.key = key;
+                currentSort.asc = (key !== 'squad_cp');
             }
+            renderTable();
+        }
+
+        function renderTable() {
+            let sorted = [...allPlayers].sort((a, b) => {
+                let valA = a[currentSort.key];
+                let valB = b[currentSort.key];
+                if (currentSort.key === 'squad_cp') {
+                    valA = parseFloat(valA) || 0;
+                    valB = parseFloat(valB) || 0;
+                }
+                if (valA < valB) return currentSort.asc ? -1 : 1;
+                if (valA > valB) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
 
             const tbody = document.getElementById('dataTable');
-            if (displayData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-gray-400">目前尚無玩家資料</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = displayData.map((p, idx) => {
-                let statusBadge = '';
-                if (idx < 20) statusBadge = '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">正取</span>';
-                else if (idx < 30) statusBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">備取</span>';
-                else statusBadge = '<span class="bg-gray-100 text-gray-400 px-2 py-1 rounded text-xs">候補</span>';
-
+            tbody.innerHTML = sorted.map((p, idx) => {
+                let status = (idx < 20) ? '✅ 正取' : (idx < 30 ? '⏳ 備取' : '候選');
+                let color = (idx < 20) ? 'text-green-600' : (idx < 30 ? 'text-blue-500' : 'text-slate-400');
                 return `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-4 font-semibold text-indigo-900">${p.game_id}</td>
-                        <td class="p-4 text-xs text-gray-500">${p.job}<br>${p.squad_type}</td>
-                        <td class="p-4 text-right font-mono text-indigo-700 font-bold">${p.squad_cp}</td>
-                        <td class="p-4 text-center text-xs">DS:${p.ds_group}<br>CS:${p.cs_group}</td>
-                        <td class="p-4">${statusBadge}</td>
+                    <tr class="hover:bg-slate-50 border-b border-slate-100 transition">
+                        <td class="p-4 text-xs text-slate-500 font-mono">#${p.server_id}</td>
+                        <td class="p-4 font-black text-indigo-600 text-[10px]">${p.alliance_tag}</td>
+                        <td class="p-4 font-bold text-slate-800">${p.player_name}</td>
+                        <td class="p-4 text-right font-mono font-bold text-indigo-700">${p.squad_cp}</td>
+                        <td class="p-4 text-center text-[10px]">DS:${p.ds_group}<br>CS:${p.cs_group}</td>
+                        <td class="p-4 text-xs font-bold ${color}">${status}</td>
                     </tr>
                 `;
             }).join('');
